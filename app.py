@@ -1,8 +1,3 @@
-# Flask Webserver with Object Detecting Video Stream
-#
-# Tensorflow Lite object detection referenced from
-# https://github.com/EdjeElectronics/TensorFlow-Lite-Object-Detection-on-Android-and-Raspberry-Pi/blob/master/TFLite_detection_webcam.py
-
 from flask import Flask, render_template, Response
 import threading
 from threading import Thread
@@ -25,6 +20,7 @@ imW = 640
 imH = 480
 
 # Define VideoStream class to handle streaming of video from webcam in separate processing thread
+# https://github.com/EdjeElectronics/TensorFlow-Lite-Object-Detection-on-Android-and-Raspberry-Pi/blob/master/TFLite_detection_webcam.py
 class VideoStream:
     # Object that controls video streaming from the Picamera
     def __init__(self, resolution=(imW,imH), framerate=30):
@@ -73,6 +69,7 @@ lock = threading.Lock()
 app = Flask(__name__)
 
 # Initialize VideoStream
+# videostream = VideoStream(usePiCamera=True).start()
 videostream = VideoStream().start()
 time.sleep(2.0)
 
@@ -103,9 +100,8 @@ def object_detection(MODEL_NAME, GRAPH_NAME, LABELMAP_NAME, min_conf_threshold):
     with open(PATH_TO_LABELS, 'r') as f:
         labels = [line.strip() for line in f.readlines()]
 
-    # Have to do a weird fix for label map if using the COCO "starter model" from
-    # https://www.tensorflow.org/lite/models/object_detection/overview
-    # First label is '???', which has to be removed.
+    # If using the COCO "starter model" from https://www.tensorflow.org/lite/models/object_detection/overview
+    # Have to remove '???' label
     if labels[0] == '???':
         del(labels[0])
 
@@ -136,7 +132,8 @@ def object_detection(MODEL_NAME, GRAPH_NAME, LABELMAP_NAME, min_conf_threshold):
         frame1 = videostream.read()
 
         # Acquire frame and resize to expected shape [1xHxWx3]
-        frame = frame1.copy()
+        # frame = frame1.copy()
+        frame = cv2.flip(frame1, -1)
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         frame_resized = cv2.resize(frame_rgb, (width, height))
         input_data = np.expand_dims(frame_resized, axis=0)
@@ -177,6 +174,9 @@ def object_detection(MODEL_NAME, GRAPH_NAME, LABELMAP_NAME, min_conf_threshold):
 
         # Draw framerate in corner of frame
         cv2.putText(frame,'FPS: {0:.2f}'.format(frame_rate_calc), (30,50), cv2.FONT_HERSHEY_SIMPLEX, 1,(255, 255, 0), 1, cv2.LINE_AA)
+
+        # All the results have been drawn on the frame, so it's time to display it.
+        # cv2.imshow('Object detector', frame)
 
         # Acquire the lock, set the output frame, and release the lock
         with lock:
@@ -235,6 +235,8 @@ if __name__ == "__main__":
                         default='labelmap.txt')
     parser.add_argument('--threshold', help='Minimum confidence threshold for displaying detected objects. Default: 0.5',
                         default=0.5)
+    # parser.add_argument('--resolution', help='Desired webcam resolution in WxH. If the webcam does not support the resolution entered, errors may occur.',
+    #                     default='1280x720')
     args = parser.parse_args()
 
     # Start a thread that will perform object detection
