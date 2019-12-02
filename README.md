@@ -32,3 +32,13 @@ Webserver located at http://localhost:8080
 
 ### Optional Arguments
 python3 app.py -h
+
+## Model Training Data
+model/
+
+https://tensorboard.dev/experiment/KhB0cyZMRQ6wcyYacGYSaw
+
+
+TFLite_model_1_ckpt-42526/ and TFLite_model_2_ckpt-36242/
+
+https://tensorboard.dev/experiment/2tP6JO4ORHyVhzAWeoWQng
