@@ -28,5 +28,7 @@ rm tensorflow-2.0.0-cp37-none-linux_armv7l.whl
 ## How to Run
 python3 app.py
 
+Webserver located at http://localhost:8080
+
 ### Optional Arguments
 python3 app.py -h
